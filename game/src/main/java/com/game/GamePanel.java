@@ -52,7 +52,7 @@ public class GamePanel extends JPanel implements Runnable {
         setFocusable(true);
 
         Config config = new Config();
-        mapManager   = new MapManager(this);
+        mapManager   = new MapManager(this, config);
         vaultManager = new VaultManager();
         player       = new Player(this);
         dialogBox    = new DialogBox(this, config);

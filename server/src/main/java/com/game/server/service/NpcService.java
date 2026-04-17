@@ -6,6 +6,7 @@ import com.game.server.config.NpcProperties;
 import com.game.server.dto.MessageDto;
 import com.game.server.dto.NpcChatRequest;
 import com.game.server.dto.NpcChatResponse;
+import com.game.server.dto.NpcDefinitionDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -120,6 +121,12 @@ public class NpcService {
             return new NpcChatResponse(raw.length() > 300 ? raw.substring(0, 300) : raw,
                                        new ArrayList<>());
         }
+    }
+
+    public List<NpcDefinitionDto> listNpcs() {
+        return npcProperties.getCharacters().entrySet().stream()
+                .map(e -> new NpcDefinitionDto(e.getKey(), e.getValue().getShirtColor()))
+                .toList();
     }
 
     private NpcChatResponse fallback() {

@@ -14,10 +14,14 @@ public class NpcProperties {
     private Map<String, NpcConfig> characters = new HashMap<>();
 
     public static class NpcConfig {
-        private String context = "";
+        private String context    = "";
+        private String shirtColor = "#808080";
 
-        public String getContext() { return context; }
-        public void setContext(String context) { this.context = context; }
+        public String getContext()    { return context; }
+        public String getShirtColor() { return shirtColor; }
+
+        public void setContext(String context)       { this.context    = context; }
+        public void setShirtColor(String shirtColor) { this.shirtColor = shirtColor; }
     }
 
     /** Assembles the full system prompt for a given NPC (case-insensitive name match). */

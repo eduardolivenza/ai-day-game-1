@@ -10,11 +10,10 @@ This is a **Gradle multi-module project** (Java 25). All commands run from the r
 # Compile both modules
 ./gradlew :game:compileJava :server:compileJava
 
-# Run the AI server (terminal 1) – requires ANTHROPIC_API_KEY
-export ANTHROPIC_API_KEY=sk-ant-...
+# Run the AI server (terminal 1)
 ./gradlew :server:bootRun
 
-# Run the game (terminal 2) – server must be running first
+# Run the game (terminal 2) – server must be running first so NPCs load
 ./gradlew :game:run
 
 # Clean build
@@ -28,7 +27,7 @@ The game's working directory is `game/` (configured in `game/build.gradle.kts`),
 | Module | Tech | Entry point |
 |--------|------|-------------|
 | `game/` | Java Swing, `org.json` | `com.game.Main` → `GameWindow` → `GamePanel` |
-| `server/` | Spring Boot 3.3.5, Spring AI 1.0.3 (Anthropic) | `com.game.server.Application` |
+| `server/` | Spring Boot 3.3.5, Spring AI 1.0.3 | `com.game.server.Application` |
 
 Spring Boot / dependency-management plugin versions are pinned once in the root `build.gradle.kts` (`apply false`) and referenced without version in `server/build.gradle.kts`.
 
@@ -38,17 +37,18 @@ Spring Boot / dependency-management plugin versions are pinned once in the root 
 
 ```
 GamePanel
- ├── KeyHandler          (KeyListener, attached to JPanel)
- ├── TileManager         (generates all 10 tile BufferedImages procedurally at startup)
- ├── MapManager(gp)      (builds maps + NPCs, owns npcRegistry)
+ ├── KeyHandler             (KeyListener, attached to JPanel)
+ ├── TileManager            (generates all 10 tile BufferedImages procedurally at startup)
+ ├── MapManager(gp, config) (builds maps, fetches NPCs from server, places them on spawn slots)
+ ├── VaultManager           (picks random vault location; randomizes again when vault is found)
  ├── Player(gp)
- ├── DialogBox(gp, cfg)  (holds GameApiClient)
- └── SaveManager(gp)     (loadGame() called at end of constructor; saveGame() on JVM shutdown)
+ ├── DialogBox(gp, cfg)     (holds GameApiClient)
+ └── SaveManager(gp)        (loadGame() called at end of constructor; saveGame() on JVM shutdown)
 ```
 
-**Game loop** (60 FPS fixed-timestep in `GamePanel.run()`): each tick calls `update()` then `repaint()`. The `update()` is gated by `GameState` enum (`PLAYING / DIALOG / TRANSITION`).
+**Game loop** (60 FPS fixed-timestep in `GamePanel.run()`): each tick calls `update()` then `repaint()`. The `update()` is gated by `GameState` enum (`PLAYING / DIALOG / TRANSITION / VAULT_FOUND`).
 
-**Rendering** in `paintComponent`: world tiles + NPCs + player are drawn offset by `(cameraX, cameraY)`, then the camera translation is undone and screen-space UI (HUD, dialog box, fade overlay) is drawn on top.
+**Rendering** in `paintComponent`: world tiles → vault chest → NPCs → player (all offset by camera), then camera is undone and screen-space UI (HUD, dialog box, fade overlay, vault-found overlay) is drawn on top.
 
 ### Tile System
 
@@ -66,15 +66,39 @@ Maps are defined as `int[][]` arrays inside `MapManager.buildMaps()`. Each map i
 
 A `DoorConnection` links a tile position `(fromCol, fromRow)` on one map to a pixel spawn `(targetX, targetY)` on another. When `Player` steps on a tile-4 (DOOR), it calls `MapManager.startTransition(door)`, which runs a fade-out → swap → fade-in sequence over ~40 frames.
 
-Current maps: `overworld` (25×20), `house1` (12×10), `house2` (12×10).
+Current maps: `overworld` (25×20), `house1` (12×10), `house2` (12×10), `house3` (12×10).
 
-To **add a new map**: define its `int[][]` in `buildMaps()`, wire `DoorConnection`s on both sides, add any NPCs, and `maps.put(id, map)`.
+To **add a new map**: define its `int[][]` in `buildMaps()`, wire `DoorConnection`s on both sides, call `maps.put(id, map)`, and optionally add a spawn slot to `SPAWN_SLOTS`.
+
+### NPC System
+
+NPCs are defined entirely in `server/src/main/resources/application.yml` under `npc.characters`. Each entry has:
+- `context`: the character's personality and lore (used as part of the system prompt)
+- `shirt-color`: hex color used for sprite rendering and dialog header tint
+
+At startup `MapManager` calls `GET /api/npc/list`, receives all NPC names and colors, shuffles the predefined `SPAWN_SLOTS`, and places one NPC per slot. The game has no hardcoded NPC names or count.
+
+**To add a new NPC**: add an entry to `application.yml` under `npc.characters` with a `shirt-color` and `context`. It will be picked up automatically on next launch.
+
+`SPAWN_SLOTS` in `MapManager.java` defines valid spawn positions (mapId, col, row). Currently 7 slots across the overworld and all 3 houses. Add more slots if you add more NPCs than slots.
 
 ### Entity & Collision
 
 `Entity` is the base class with `worldX/worldY`, directional sprite array `[4 directions][3 frames]`, and a `solidArea` hitbox. Sprites are generated procedurally using `NPC.drawFront/drawBack/drawSide` static helpers (shared with `Player`).
 
 Collision in `Player.wouldCollide(dx, dy)` checks the four corners of the shifted hitbox against tile solidity and NPC solid areas. NPC collision is skipped if the player is already overlapping an NPC (prevents post-dialog sticking).
+
+### Vault System
+
+`VaultManager` maintains a randomly selected location from 8 named overworld spots. Each spot has a `(col, row)` position and a human-readable `description` used as NPC hint context.
+
+- The vault is rendered as a small wooden chest in world-space (overworld only).
+- When the player approaches, a HUD hint appears; pressing ENTER triggers `GamePanel.openVault()`.
+- `openVault()`: clears all NPC conversation histories, calls `vaultManager.randomize()`, switches to `VAULT_FOUND` state which shows a full-screen overlay.
+- The current vault location index is included in `save.json` so it persists across sessions.
+- The vault description is sent as `vaultContext` in every NPC chat request. The server injects it into the system prompt so NPCs give specific, location-aware clues.
+
+To **add or change vault locations**: edit the `LOCATIONS` list in `VaultManager.java`. Each entry needs a grass tile in the overworld that is not a door or water.
 
 ### Dialog Flow
 
@@ -89,53 +113,69 @@ LOADING_INITIAL → SHOWING_CHOICES ←→ TYPING
 - `LOADING_*` states: async `CompletableFuture` calls `GameApiClient`; result lands in an `AtomicReference` polled each frame.
 - **Numbered choice [1–3]**: sends reply with `includeChoices=false` → `SHOWING_FINAL` (ends conversation).
 - **[T] custom message**: sends reply with `includeChoices=true` → back to `SHOWING_CHOICES` (conversation loops).
-- NPC conversation history (`List<Map<String,String>>`) is maintained on the `NPC` object and included in every request so Claude has context.
+- **ESC**: closes the conversation immediately from both `SHOWING_CHOICES` and `TYPING` states.
+- NPC conversation history (`List<Map<String,String>>`) is maintained on the `NPC` object and included in every request. It is persisted to `save.json` and cleared when the vault is found.
 
 ## Server Architecture
 
 ```
-NpcController  →  NpcService  →  Spring AI ChatModel (Anthropic)
+NpcController  →  NpcService  →  Spring AI ChatModel
 ```
 
-`NpcService.chat(NpcChatRequest)` reconstructs a `List<Message>` (`SystemMessage` + history + new `UserMessage`) and calls `chatModel.call(Prompt)`. Claude is instructed to respond with JSON only; the service strips markdown fences if present and parses with Jackson.
+### API Endpoints
 
-**API contract** — `POST /api/npc/chat`:
-
+**`GET /api/npc/list`** — returns all NPC definitions from `application.yml`:
 ```json
-// Request
+[
+  { "name": "Elder Oryn", "shirtColor": "#708090" },
+  ...
+]
+```
+
+**`POST /api/npc/chat`** — runs one turn of NPC dialog:
+```
+Request:
 {
   "npcName": "Elder Oryn",
-  "systemPrompt": "You are...",
   "history": [{"role":"assistant","content":"..."},{"role":"user","content":"..."}],
-  "playerMessage": null,      // null = start new conversation
-  "includeChoices": true       // true → return message+choices; false → message only
+  "playerMessage": null,       (null = start new conversation)
+  "includeChoices": true,      (true → message+choices, false → message only)
+  "vaultContext": "in the northeast corner..."
 }
 
-// Response
+Response:
 {
   "npcMessage": "Greetings, traveler...",
-  "choices": ["Option A", "Option B", "Option C"]   // empty when includeChoices=false
+  "choices": ["Option A", "Option B", "Option C"]   (empty when includeChoices=false)
 }
 ```
 
-Spring AI version: `spring-ai-bom:1.0.3`. The correct starter artifact name is `spring-ai-starter-model-anthropic` (renamed in 1.0.x; old name `spring-ai-anthropic-spring-boot-starter` no longer exists).
+`NpcService.chat()` builds the system prompt from `NpcProperties.buildSystemPrompt(npcName)` (global background + character context from `application.yml`), then appends the vault location as an additional instruction if `vaultContext` is present.
 
-## NPC Definitions
+### NPC Configuration (`application.yml`)
 
-All NPCs are defined in `MapManager.buildMaps()`. Each NPC has a name, a system prompt (persona), spawn tile `(col, row)`, and a shirt `Color` used for both sprite rendering and the dialog box header tint.
+`npc.global-background`: shared world lore and behavioral rules applied to all NPCs.
 
-Current NPCs: `Elder Oryn` and `Mira` on the overworld; `Brom` in `house1`; `Aelara` in `house2`.
+`npc.characters.<name>`: per-NPC fields:
+- `shirt-color` (hex): visual color
+- `context`: character personality, backstory, and vault knowledge style
 
 ## Persistence
 
-`SaveManager` writes `game/save.json` on JVM shutdown and loads it on startup. It persists: current map ID, player pixel position, and per-NPC conversation history. The save file and `game/config.properties` are gitignored.
+`SaveManager` writes `game/save.json` on JVM shutdown and loads it on startup. It persists:
+- Current map ID
+- Player pixel position
+- Per-NPC conversation history
+- Vault location index
+
+The save file and `game/config.properties` are gitignored.
 
 ## Controls
 
 | Key | Action |
 |-----|--------|
 | WASD / Arrow keys | Move |
-| ENTER / SPACE | Talk to nearby NPC; confirm in dialog |
+| ENTER / SPACE | Talk to nearby NPC or open vault; confirm in dialog |
 | 1 / 2 / 3 | Select numbered dialog choice |
 | T | Open free-text input in dialog |
-| ESC | Cancel typing, back to choices |
+| ESC | Exit conversation (from choices or typing screen) |

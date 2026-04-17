@@ -2,13 +2,31 @@ package com.game.map;
 
 import com.game.GamePanel;
 import com.game.GameState;
+import com.game.dialog.GameApiClient;
 import com.game.entity.NPC;
+import com.game.entity.NpcDefinition;
 import com.game.tile.TileManager;
+import com.game.util.Config;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class MapManager {
+
+    private record SpawnSlot(String mapId, int col, int row) {}
+
+    private static final List<SpawnSlot> SPAWN_SLOTS = List.of(
+        new SpawnSlot("overworld", 14, 10),
+        new SpawnSlot("overworld",  5, 13),
+        new SpawnSlot("overworld", 20, 10),
+        new SpawnSlot("overworld",  5, 10),
+        new SpawnSlot("house1",     5,  3),
+        new SpawnSlot("house2",     7,  3),
+        new SpawnSlot("house3",     5,  3)
+    );
 
     private final GamePanel gp;
     private final java.util.Map<String, TileMap> maps = new HashMap<>();
@@ -23,9 +41,11 @@ public class MapManager {
     // All NPCs (for save/load access)
     private final java.util.Map<String, NPC> npcRegistry = new HashMap<>();
 
-    public MapManager(GamePanel gp) {
+    public MapManager(GamePanel gp, Config config) {
         this.gp = gp;
         buildMaps();
+        List<NpcDefinition> defs = new GameApiClient(config).fetchNpcDefinitions();
+        placeNpcs(defs);
         currentMap = maps.get("overworld");
     }
 
@@ -131,27 +151,23 @@ public class MapManager {
         house3.addDoor(new DoorConnection(5, 8, "overworld",
                 10 * TileManager.T, 5 * TileManager.T));
 
-        // ── NPCs ──────────────────────────────────────────────────────────
-
-        NPC elderOryn = new NPC("Elder Oryn", 14, 10, new Color(0x708090));  // slate gray robe
-        NPC mira      = new NPC("Mira",       5, 13, new Color(0xff8fb0));  // pink
-        NPC brom      = new NPC("Brom",       5,  3, new Color(0x8b5e2a));  // brown vest
-        NPC aelara    = new NPC("Aelara",     7,  3, new Color(0x6040a0));  // purple robe
-
-        overworld.addNpc(elderOryn);
-        overworld.addNpc(mira);
-        house1.addNpc(brom);
-        house2.addNpc(aelara);
-
-        npcRegistry.put("Elder Oryn", elderOryn);
-        npcRegistry.put("Mira",       mira);
-        npcRegistry.put("Brom",       brom);
-        npcRegistry.put("Aelara",     aelara);
-
         maps.put("overworld", overworld);
         maps.put("house1",    house1);
         maps.put("house2",    house2);
-        maps.put("house3", house3);
+        maps.put("house3",    house3);
+    }
+
+    private void placeNpcs(List<NpcDefinition> defs) {
+        List<SpawnSlot> slots = new ArrayList<>(SPAWN_SLOTS);
+        Collections.shuffle(slots);
+        int count = Math.min(defs.size(), slots.size());
+        for (int i = 0; i < count; i++) {
+            NpcDefinition def  = defs.get(i);
+            SpawnSlot     slot = slots.get(i);
+            NPC npc = new NPC(def.name(), slot.col(), slot.row(), def.shirtColor());
+            maps.get(slot.mapId()).addNpc(npc);
+            npcRegistry.put(def.name(), npc);
+        }
     }
 
     // ── tile data ─────────────────────────────────────────────────────────

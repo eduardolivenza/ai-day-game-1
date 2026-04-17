@@ -1,9 +1,11 @@
 package com.game.dialog;
 
+import com.game.entity.NpcDefinition;
 import com.game.util.Config;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.awt.Color;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -29,6 +31,31 @@ public class GameApiClient {
         this.http   = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
+    }
+
+    /** Fetches all NPC definitions from the server. Returns empty list if server is unreachable. */
+    public List<NpcDefinition> fetchNpcDefinitions() {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(config.getServerUrl() + "/api/npc/list"))
+                    .GET()
+                    .timeout(Duration.ofSeconds(5))
+                    .build();
+            HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() != 200) return List.of();
+            JSONArray arr = new JSONArray(resp.body());
+            List<NpcDefinition> result = new ArrayList<>();
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                String name  = obj.getString("name");
+                Color  color = Color.decode(obj.optString("shirtColor", "#808080"));
+                result.add(new NpcDefinition(name, color));
+            }
+            return result;
+        } catch (Exception e) {
+            System.err.println("[Client] Could not fetch NPC definitions: " + e.getMessage());
+            return List.of();
+        }
     }
 
     /** Start a fresh conversation (no playerMessage). Returns message + 3 choices. */
