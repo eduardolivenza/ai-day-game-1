@@ -2,6 +2,7 @@ package com.game.server.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.game.server.config.NpcProperties;
 import com.game.server.dto.MessageDto;
 import com.game.server.dto.NpcChatRequest;
 import com.game.server.dto.NpcChatResponse;
@@ -24,17 +25,19 @@ public class NpcService {
 
     private static final Logger log = LoggerFactory.getLogger(NpcService.class);
 
-    private final ChatModel    chatModel;
-    private final ObjectMapper objectMapper;
+    private final ChatModel     chatModel;
+    private final ObjectMapper  objectMapper;
+    private final NpcProperties npcProperties;
 
-    public NpcService(ChatModel chatModel, ObjectMapper objectMapper) {
-        this.chatModel    = chatModel;
-        this.objectMapper = objectMapper;
+    public NpcService(ChatModel chatModel, ObjectMapper objectMapper, NpcProperties npcProperties) {
+        this.chatModel      = chatModel;
+        this.objectMapper   = objectMapper;
+        this.npcProperties  = npcProperties;
     }
 
     public NpcChatResponse chat(NpcChatRequest req) {
         List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage(req.getSystemPrompt()));
+        messages.add(new SystemMessage(npcProperties.buildSystemPrompt(req.getNpcName())));
 
         // Rebuild conversation history
         for (MessageDto m : req.getHistory()) {

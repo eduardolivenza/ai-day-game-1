@@ -42,3 +42,5 @@ bin/
 ### Game specific ###
 game/config.properties
 game/save.json
+/save.json
+/server/src/main/resources/application.yml
