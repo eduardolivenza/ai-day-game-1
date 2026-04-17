@@ -63,8 +63,9 @@ public class Player extends Entity {
         // Check door
         checkDoor();
 
-        // Check talk
+        // Check talk and vault proximity
         checkTalkProximity();
+        checkVaultProximity();
         if (keys.enterPressed) {
             keys.consumeEnter();
             if (talkCooldown == 0) {
@@ -73,6 +74,9 @@ public class Player extends Entity {
                     talkCooldown = 30;
                     gp.dialogBox.startWith(nearby);
                     gp.gameState = GameState.DIALOG;
+                } else if (gp.vaultManager.playerNearby) {
+                    talkCooldown = 30;
+                    gp.openVault();
                 }
             }
         }
@@ -145,6 +149,19 @@ public class Player extends Entity {
             double dist = Math.hypot(cx - nx, cy - ny);
             npc.playerNearby = (dist <= talkRange);
         }
+    }
+
+    private void checkVaultProximity() {
+        if (!"overworld".equals(gp.mapManager.getCurrentMap().getId())) {
+            gp.vaultManager.playerNearby = false;
+            return;
+        }
+        var loc = gp.vaultManager.getCurrent();
+        int cx = worldX + TILE / 2;
+        int cy = worldY + TILE / 2;
+        int vx = loc.col() * TILE + TILE / 2;
+        int vy = loc.row() * TILE + TILE / 2;
+        gp.vaultManager.playerNearby = (Math.hypot(cx - vx, cy - vy) <= TILE * 1.6);
     }
 
     private NPC getNearestTalkableNPC() {

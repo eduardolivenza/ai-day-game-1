@@ -36,8 +36,18 @@ public class NpcService {
     }
 
     public NpcChatResponse chat(NpcChatRequest req) {
+        String systemPrompt = npcProperties.buildSystemPrompt(req.getNpcName());
+        if (req.getVaultContext() != null && !req.getVaultContext().isBlank()) {
+            systemPrompt += "\n\nYou know exactly where the ancient vault is hidden: "
+                    + req.getVaultContext() + ". "
+                    + "If the traveler asks about the vault, treasure, or hidden things, "
+                    + "give a clue about its location in your own style and personality — "
+                    + "poetic, cryptic, or direct depending on who you are. "
+                    + "Do not simply state the location outright; let your personality shape the hint.";
+        }
+
         List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage(npcProperties.buildSystemPrompt(req.getNpcName())));
+        messages.add(new SystemMessage(systemPrompt));
 
         // Rebuild conversation history
         for (MessageDto m : req.getHistory()) {

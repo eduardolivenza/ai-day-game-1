@@ -76,7 +76,8 @@ public class DialogBox {
 
         CompletableFuture.runAsync(() -> {
             var r = api.startConversation(npc.name, npc.getSystemPrompt(),
-                                          npc.conversationHistory);
+                                          npc.conversationHistory,
+                                          gp.vaultManager.getContext());
             pending.set(r);
         });
     }
@@ -200,7 +201,8 @@ public class DialogBox {
                     activeNpc.getSystemPrompt(),
                     activeNpc.conversationHistory,
                     playerMessage,
-                    includeChoices);
+                    includeChoices,
+                    gp.vaultManager.getContext());
             pending.set(r);
         });
     }

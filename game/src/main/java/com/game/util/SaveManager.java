@@ -24,9 +24,10 @@ public class SaveManager {
     public void saveGame() {
         try {
             JSONObject root = new JSONObject();
-            root.put("currentMap", gp.mapManager.getCurrentMap().getId());
-            root.put("playerX",    gp.player.worldX);
-            root.put("playerY",    gp.player.worldY);
+            root.put("currentMap",         gp.mapManager.getCurrentMap().getId());
+            root.put("playerX",            gp.player.worldX);
+            root.put("playerY",            gp.player.worldY);
+            root.put("vaultLocationIndex", gp.vaultManager.getIndex());
 
             JSONObject conversations = new JSONObject();
             for (Map.Entry<String, NPC> entry : gp.mapManager.getNpcRegistry().entrySet()) {
@@ -64,6 +65,8 @@ public class SaveManager {
             }
             gp.player.worldX = root.optInt("playerX", 11 * 48);
             gp.player.worldY = root.optInt("playerY", 14 * 48);
+            int vaultIdx = root.optInt("vaultLocationIndex", -1);
+            if (vaultIdx >= 0) gp.vaultManager.setIndex(vaultIdx);
 
             JSONObject conversations = root.optJSONObject("npcConversations");
             if (conversations != null) {

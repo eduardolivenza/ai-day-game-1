@@ -34,8 +34,9 @@ public class GameApiClient {
     /** Start a fresh conversation (no playerMessage). Returns message + 3 choices. */
     public ConversationResult startConversation(String npcName,
                                                  String systemPrompt,
-                                                 List<Map<String, String>> history) {
-        return call(npcName, systemPrompt, history, null, true);
+                                                 List<Map<String, String>> history,
+                                                 String vaultContext) {
+        return call(npcName, systemPrompt, history, null, true, vaultContext);
     }
 
     /**
@@ -45,8 +46,9 @@ public class GameApiClient {
     public ConversationResult continueConversation(String systemPrompt,
                                                     List<Map<String, String>> history,
                                                     String playerMessage,
-                                                    boolean includeChoices) {
-        return call(null, systemPrompt, history, playerMessage, includeChoices);
+                                                    boolean includeChoices,
+                                                    String vaultContext) {
+        return call(null, systemPrompt, history, playerMessage, includeChoices, vaultContext);
     }
 
     // ── private ────────────────────────────────────────────────────────────
@@ -54,13 +56,16 @@ public class GameApiClient {
     private ConversationResult call(String npcName, String systemPrompt,
                                      List<Map<String, String>> history,
                                      String playerMessage,
-                                     boolean includeChoices) {
+                                     boolean includeChoices,
+                                     String vaultContext) {
         try {
             JSONObject body = new JSONObject();
             if (npcName != null)     body.put("npcName", npcName);
             body.put("systemPrompt", systemPrompt);
             body.put("includeChoices", includeChoices);
             if (playerMessage != null) body.put("playerMessage", playerMessage);
+            if (vaultContext  != null && !vaultContext.isBlank())
+                body.put("vaultContext", vaultContext);
 
             JSONArray hist = new JSONArray();
             for (Map<String, String> m : history) {

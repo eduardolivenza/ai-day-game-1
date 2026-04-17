@@ -3,5 +3,6 @@ package com.game;
 public enum GameState {
     PLAYING,
     DIALOG,
-    TRANSITION
+    TRANSITION,
+    VAULT_FOUND
 }

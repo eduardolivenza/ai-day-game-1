@@ -17,13 +17,18 @@ public class NpcChatRequest {
      */
     private boolean includeChoices = true;
 
+    /** Human-readable vault location description, injected into the NPC's system prompt. */
+    private String vaultContext;
+
     public String getNpcName()            { return npcName; }
     public List<MessageDto> getHistory()  { return history; }
     public String getPlayerMessage()      { return playerMessage; }
     public boolean isIncludeChoices()     { return includeChoices; }
+    public String getVaultContext()       { return vaultContext; }
 
     public void setNpcName(String v)               { npcName = v; }
     public void setHistory(List<MessageDto> v)     { history = v; }
     public void setPlayerMessage(String v)         { playerMessage = v; }
     public void setIncludeChoices(boolean v)       { includeChoices = v; }
+    public void setVaultContext(String v)          { vaultContext = v; }
 }
