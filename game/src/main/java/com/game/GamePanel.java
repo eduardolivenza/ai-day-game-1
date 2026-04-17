@@ -139,6 +139,7 @@ public class GamePanel extends JPanel implements Runnable {
         String mapName = switch (mapManager.getCurrentMap().getId()) {
             case "house1"    -> "Brom's Inn";
             case "house2"    -> "Aelara's Study";
+            case "house3"    -> "Empty house";
             default          -> "The Village of Elmswick";
         };
         g.setFont(new Font("SansSerif", Font.BOLD, 12));

@@ -111,6 +111,7 @@ public class MapManager {
         TileMap overworld = buildOverworld();
         TileMap house1    = buildHouse("house1");
         TileMap house2    = buildHouse("house2");
+        TileMap house3    = buildHouse("house3");
 
         // Door: overworld (3,4) → house1, spawn at col=5,row=7
         overworld.addDoor(new DoorConnection(3, 4, "house1",
@@ -118,12 +119,17 @@ public class MapManager {
         // Door: overworld (19,4) → house2, spawn at col=5,row=7
         overworld.addDoor(new DoorConnection(19, 4, "house2",
                 5 * TileManager.T, 7 * TileManager.T));
+        overworld.addDoor(new DoorConnection(10, 4, "house3",
+                5 * TileManager.T, 7 * TileManager.T));
+
         // Door: house1 (5,8) → overworld, spawn in front of left house
         house1.addDoor(new DoorConnection(5, 8, "overworld",
                 3 * TileManager.T, 5 * TileManager.T));
         // Door: house2 (5,8) → overworld, spawn in front of right house
         house2.addDoor(new DoorConnection(5, 8, "overworld",
                 19 * TileManager.T, 5 * TileManager.T));
+        house3.addDoor(new DoorConnection(5, 8, "overworld",
+                10 * TileManager.T, 5 * TileManager.T));
 
         // ── NPCs ──────────────────────────────────────────────────────────
 
@@ -176,6 +182,7 @@ public class MapManager {
         maps.put("overworld", overworld);
         maps.put("house1",    house1);
         maps.put("house2",    house2);
+        maps.put("house3", house3);
     }
 
     // ── tile data ─────────────────────────────────────────────────────────
@@ -186,9 +193,9 @@ public class MapManager {
             // 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
             {  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }, // row 0
             {  5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5 }, // row 1
-            {  5, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 5 }, // row 2
-            {  5, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 5 }, // row 3
-            {  5, 0, 1, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 1, 0, 0, 0, 5 }, // row 4  doors
+            {  5, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 5 }, // row 2
+            {  5, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 5 }, // row 3
+            {  5, 0, 1, 4, 1, 0, 0, 0, 0, 1, 4, 1, 0, 0, 0, 0, 0, 0, 1, 4, 1, 0, 0, 0, 5 }, // row 4  doors
             {  5, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 5 }, // row 5
             {  5, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 5 }, // row 6
             {  5, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 5 }, // row 7  main path
@@ -200,8 +207,8 @@ public class MapManager {
             {  5, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 5 }, // row 13
             {  5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5 }, // row 14 player start
             {  5, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 5 }, // row 15
-            {  5, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 5 }, // row 16
-            {  5, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 5 }, // row 17
+            {  5, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5 }, // row 16
+            {  5, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 5 }, // row 17
             {  5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5 }, // row 18
             {  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }, // row 19
         };
