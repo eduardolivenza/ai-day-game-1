@@ -6,7 +6,8 @@ import java.awt.event.KeyListener;
 public class KeyHandler implements KeyListener {
 
     public boolean up, down, left, right;
-    public boolean enterPressed;
+    public boolean enterPressed;   // ENTER or SPACE — game-world interact / dialog confirm
+    public boolean confirmPressed; // ENTER only — submit typed text in dialog
     public boolean escPressed;
     public boolean tPressed;                    // open typing mode in dialog
     public boolean[] numPressed = new boolean[4]; // indices 1–3 used
@@ -21,7 +22,8 @@ public class KeyHandler implements KeyListener {
             case KeyEvent.VK_DOWN,  KeyEvent.VK_S -> down  = true;
             case KeyEvent.VK_LEFT,  KeyEvent.VK_A -> left  = true;
             case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> right = true;
-            case KeyEvent.VK_ENTER, KeyEvent.VK_SPACE -> enterPressed = true;
+            case KeyEvent.VK_SPACE -> enterPressed = true;
+            case KeyEvent.VK_ENTER -> { enterPressed = true; confirmPressed = true; }
             case KeyEvent.VK_ESCAPE -> escPressed = true;
             case KeyEvent.VK_T      -> tPressed   = true;
             case KeyEvent.VK_1 -> numPressed[1] = true;
@@ -60,7 +62,8 @@ public class KeyHandler implements KeyListener {
         return c;
     }
 
-    public void consumeEnter()          { enterPressed = false; }
+    public void consumeEnter()          { enterPressed = false; confirmPressed = false; }
+    public void consumeConfirm()        { confirmPressed = false; }
     public void consumeEsc()            { escPressed   = false; }
     public void consumeT()              { tPressed     = false; }
     public void consumeNum(int n)       { if (n >= 1 && n <= 3) numPressed[n] = false; }

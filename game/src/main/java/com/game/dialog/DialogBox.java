@@ -156,6 +156,7 @@ public class DialogBox {
         // T → open typing input
         if (gp.keyHandler.tPressed) {
             gp.keyHandler.consumeT();
+            gp.keyHandler.consumeTyped(); // discard the 't' that triggered this
             typedText.setLength(0);
             cursorTick = 0;
             state = State.TYPING;
@@ -181,9 +182,9 @@ public class DialogBox {
             return;
         }
 
-        // ENTER → submit (only if something typed)
-        if (gp.keyHandler.enterPressed && typedText.length() > 0) {
-            gp.keyHandler.consumeEnter();
+        // ENTER → submit (only if something typed; SPACE must not trigger this)
+        if (gp.keyHandler.confirmPressed && typedText.length() > 0) {
+            gp.keyHandler.consumeConfirm();
             sendReply(typedText.toString().trim(), true); // includeChoices=true → loop back
         }
     }
