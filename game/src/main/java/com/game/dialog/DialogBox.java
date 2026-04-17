@@ -75,7 +75,7 @@ public class DialogBox {
         gp.keyHandler.consumeT();  // clear stale T presses
 
         CompletableFuture.runAsync(() -> {
-            var r = api.startConversation(npc.name, npc.getSystemPrompt(),
+            var r = api.startConversation(npc.name,
                                           npc.conversationHistory,
                                           gp.vaultManager.getContext());
             pending.set(r);
@@ -143,6 +143,12 @@ public class DialogBox {
     }
 
     private void handleChoices() {
+        // ESC → exit conversation
+        if (gp.keyHandler.escPressed) {
+            gp.keyHandler.consumeEsc();
+            close();
+            return;
+        }
         // Numbered choice → end conversation
         for (int i = 1; i <= 3; i++) {
             if (gp.keyHandler.numPressed[i]) {
@@ -176,10 +182,10 @@ public class DialogBox {
             }
         }
 
-        // ESC → back to choices
+        // ESC → exit conversation
         if (gp.keyHandler.escPressed) {
             gp.keyHandler.consumeEsc();
-            state = State.SHOWING_CHOICES;
+            close();
             return;
         }
 
@@ -198,7 +204,6 @@ public class DialogBox {
 
         CompletableFuture.runAsync(() -> {
             var r = api.continueConversation(
-                    activeNpc.getSystemPrompt(),
                     activeNpc.conversationHistory,
                     playerMessage,
                     includeChoices,
@@ -226,9 +231,11 @@ public class DialogBox {
             g.setColor(new Color(0xffdd80));
             g.drawString("[" + (i + 1) + "] " + choices.get(i), BOX_X + 14, baseY + i * 17);
         }
-        // Type option
+        // Type option + exit hint
         g.setColor(new Color(0x80ddff));
         g.drawString("[T] Type your own message...", BOX_X + 14, baseY + 51);
+        g.setColor(Color.GRAY);
+        g.drawString("[ESC] Leave", BOX_X + BOX_W - 90, baseY + 51);
     }
 
     private void drawTyping(Graphics2D g) {
@@ -251,7 +258,7 @@ public class DialogBox {
 
         g.setFont(CHOICE_FONT);
         g.setColor(Color.GRAY);
-        g.drawString("ENTER to send  •  ESC to cancel", BOX_X + 14, BOX_Y + BOX_HEIGHT - 10);
+        g.drawString("ENTER to send  •  ESC to leave", BOX_X + 14, BOX_Y + BOX_HEIGHT - 10);
     }
 
     private void drawFinal(Graphics2D g) {

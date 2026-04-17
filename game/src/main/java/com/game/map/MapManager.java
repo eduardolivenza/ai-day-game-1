@@ -133,41 +133,10 @@ public class MapManager {
 
         // ── NPCs ──────────────────────────────────────────────────────────
 
-        NPC elderOryn = new NPC(
-                "Elder Oryn",
-                "You are Elder Oryn, an ancient and wise guardian of a small village. "
-                + "You have lived for centuries and know many hidden secrets of the land. "
-                + "You speak warmly but with gravitas. You often share cryptic hints about "
-                + "a great darkness stirring in the east. Keep all replies to 2-3 sentences.",
-                14, 10,
-                new Color(0x708090));  // slate gray robe
-
-        NPC mira = new NPC(
-                "Mira",
-                "You are Mira, a cheerful 12-year-old girl who loves flowers and is the "
-                + "self-appointed village gossip. You know everything that happens around here. "
-                + "You speak with excitement and often ask the adventurer questions. "
-                + "Keep all replies to 2-3 sentences.",
-                5, 13,
-                new Color(0xff8fb0));   // pink
-
-        NPC brom = new NPC(
-                "Brom",
-                "You are Brom, the gruff but kind innkeeper and merchant who runs the local inn. "
-                + "You are always trying to sell something or strike a deal. "
-                + "You speak directly and are slightly suspicious of strangers at first. "
-                + "Keep all replies to 2-3 sentences.",
-                5, 3,
-                new Color(0x8b5e2a));   // brown vest
-
-        NPC aelara = new NPC(
-                "Aelara",
-                "You are Aelara, a mysterious elven sage who dwells alone. "
-                + "You have visions of the future and speak in riddles and metaphors. "
-                + "You sense great potential in the adventurer. "
-                + "Keep all replies to 2-3 sentences.",
-                7, 3,
-                new Color(0x6040a0));   // purple robe
+        NPC elderOryn = new NPC("Elder Oryn", 14, 10, new Color(0x708090));  // slate gray robe
+        NPC mira      = new NPC("Mira",       5, 13, new Color(0xff8fb0));  // pink
+        NPC brom      = new NPC("Brom",       5,  3, new Color(0x8b5e2a));  // brown vest
+        NPC aelara    = new NPC("Aelara",     7,  3, new Color(0x6040a0));  // purple robe
 
         overworld.addNpc(elderOryn);
         overworld.addNpc(mira);

@@ -33,35 +33,32 @@ public class GameApiClient {
 
     /** Start a fresh conversation (no playerMessage). Returns message + 3 choices. */
     public ConversationResult startConversation(String npcName,
-                                                 String systemPrompt,
                                                  List<Map<String, String>> history,
                                                  String vaultContext) {
-        return call(npcName, systemPrompt, history, null, true, vaultContext);
+        return call(npcName, history, null, true, vaultContext);
     }
 
     /**
      * Continue after player made a choice.
      * @param includeChoices true = typed reply (loop back), false = numbered choice (end).
      */
-    public ConversationResult continueConversation(String systemPrompt,
-                                                    List<Map<String, String>> history,
+    public ConversationResult continueConversation(List<Map<String, String>> history,
                                                     String playerMessage,
                                                     boolean includeChoices,
                                                     String vaultContext) {
-        return call(null, systemPrompt, history, playerMessage, includeChoices, vaultContext);
+        return call(null, history, playerMessage, includeChoices, vaultContext);
     }
 
     // ── private ────────────────────────────────────────────────────────────
 
-    private ConversationResult call(String npcName, String systemPrompt,
+    private ConversationResult call(String npcName,
                                      List<Map<String, String>> history,
                                      String playerMessage,
                                      boolean includeChoices,
                                      String vaultContext) {
         try {
             JSONObject body = new JSONObject();
-            if (npcName != null)     body.put("npcName", npcName);
-            body.put("systemPrompt", systemPrompt);
+            if (npcName != null) body.put("npcName", npcName);
             body.put("includeChoices", includeChoices);
             if (playerMessage != null) body.put("playerMessage", playerMessage);
             if (vaultContext  != null && !vaultContext.isBlank())

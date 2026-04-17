@@ -10,7 +10,6 @@ import java.util.Map;
 public class NPC extends Entity {
 
     public final String name;
-    private final String systemPrompt;
     public final Color shirtColor;
 
     /** Conversation history sent to the API. Each entry: {role, content}. */
@@ -21,17 +20,14 @@ public class NPC extends Entity {
 
     private int exclamationTick = 0;
 
-    public NPC(String name, String systemPrompt, int spawnCol, int spawnRow, Color shirtColor) {
-        this.name         = name;
-        this.systemPrompt = systemPrompt;
-        this.shirtColor   = shirtColor;
+    public NPC(String name, int spawnCol, int spawnRow, Color shirtColor) {
+        this.name       = name;
+        this.shirtColor = shirtColor;
         this.worldX       = spawnCol * TILE;
         this.worldY       = spawnRow * TILE;
         this.speed        = 0; // NPCs are stationary in base version
         generateSprites();
     }
-
-    public String getSystemPrompt() { return systemPrompt; }
 
     @Override
     public void update() {

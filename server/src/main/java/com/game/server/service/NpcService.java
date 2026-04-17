@@ -40,10 +40,10 @@ public class NpcService {
         if (req.getVaultContext() != null && !req.getVaultContext().isBlank()) {
             systemPrompt += "\n\nYou know exactly where the ancient vault is hidden: "
                     + req.getVaultContext() + ". "
-                    + "If the traveler asks about the vault, treasure, or hidden things, "
-                    + "give a clue about its location in your own style and personality — "
-                    + "poetic, cryptic, or direct depending on who you are. "
-                    + "Do not simply state the location outright; let your personality shape the hint.";
+                    + "If the traveler asks about the vault, treasure, or anything hidden, "
+                    + "give them a clear, specific, and actionable clue — name a landmark, "
+                    + "direction, or area so they can actually find it. "
+                    + "Be serious and genuinely helpful. Stay in character but do not be vague.";
         }
 
         List<Message> messages = new ArrayList<>();
